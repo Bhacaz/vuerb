@@ -60,8 +60,8 @@ class IncrementComponent < Component
     <<-ERB
       <div>
         <h1>Count: <%= count %></h1>
-        <button r-on:click="<%= :increment %>">Increment</button>
-        <button r-on:click="<%= :decrement %>">Decrement</button>
+        <button r-on:click="increment">Increment</button>
+        <button r-on:click="decrement">Decrement</button>
       </div>
     ERB
   end
@@ -81,10 +81,5 @@ JS.global[:document].querySelectorAll('[r-source]').to_a.each do |element|
 
   element[:id] = component.component_id
 
-  element.querySelectorAll('[r-on\\:click]').to_a.each do |button|
-    button.addEventListener('click') do |_event|
-      component.public_send(button.getAttribute('r-on:click').to_s)
-      # element[:innerHTML] = component.template
-    end
-  end
+  Component.bind_events(component)
 end
