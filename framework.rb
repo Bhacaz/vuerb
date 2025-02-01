@@ -60,6 +60,11 @@ class IncrementComponent < Component
     <<-ERB
       <div>
         <h1>Count: <%= count %></h1>
+        <% if count.even? %>
+          <h2>☝️</h2>
+        <% else %>
+          <h2>✌️</h2>
+        <% end %>
         <button r-on:click="increment">Increment</button>
         <button r-on:click="decrement">Decrement</button>
       </div>
@@ -77,9 +82,8 @@ JS.global[:document].querySelectorAll('[r-source]').to_a.each do |element|
   component_class = Object.const_get("#{component_name.capitalize}Component")
   data = eval(element.getAttribute('r-data').to_s)
   component = component_class.new(**data)
-  element[:innerHTML] = component.render
-
   element[:id] = component.component_id
 
+  element[:innerHTML] = component.render
   Component.bind_events(component)
 end
