@@ -3,9 +3,20 @@
 require 'js'
 require 'json'
 require 'erb'
+require 'securerandom'
+
+class Http
+  class << self
+    def get(url)
+      resp = JS.global.fetch(url).await
+      JSON.parse(resp.text.await.to_s)
+    end
+  end
+end
 
 puts RUBY_VERSION # => Hello, world! (printed to the browser console)
 JS.global[:document].querySelector('h2')[:innerHTML] = 'Hello world'
+# puts Http.get('https://catfact.ninja/facts?limit=2')['data']
 
 class Component
   def component_id
@@ -30,7 +41,13 @@ class Component
   def self.bind_events(component)
     JS.global[:document].getElementById(component.component_id).querySelectorAll('[r-on\\:click]').to_a.each do |button|
       button.addEventListener('click') do |_event|
-        component.public_send(button.getAttribute('r-on:click').to_s)
+        args = button.getAttribute('r-on:click').to_s
+        if args.start_with?('[')
+          method_name, *args = JSON.parse(args)
+          component.public_send(method_name, *args)
+        else
+          component.public_send(args)
+        end
       end
     end
   end
@@ -72,16 +89,44 @@ class IncrementComponent < Component
   end
 end
 
-def replace_element(old_element, new_element)
-  old_element.parentNode.replaceChild(new_element, old_element)
+class RandomListComponent < Component
+  attr_reactive :items
+
+  def initialize(items: [])
+    @items = items
+  end
+
+  def remove_item(item)
+    self.items = items - [item]
+  end
+
+  def add_item
+    self.items += [SecureRandom.hex(8)]
+  end
+
+  def template
+    <<-ERB
+      <button r-on:click="add_item">Add Item</button>
+      <ul>
+        <% items.each do |item| %>
+          <li><%= item %></li> <button r-on:click=<%= ['remove_item', item].to_json %>>Remove</button>
+        <% end %>
+      </ul>
+    ERB
+  end
 end
 
 JS.global[:document].querySelectorAll('[r-source]').to_a.each do |element|
   component_name = element.getAttribute('r-source').to_s
   # require_relative "./components/#{component_name}_component"
-  component_class = Object.const_get("#{component_name.capitalize}Component")
-  data = eval(element.getAttribute('r-data').to_s)
-  component = component_class.new(**data)
+  component_class = Object.const_get("#{component_name}Component")
+  component =
+    if element.getAttribute('r-data') != nil
+      data = eval(element.getAttribute('r-data').to_s)
+      component_class.new(**data)
+    else
+      component_class.new
+    end
   element[:id] = component.component_id
 
   element[:innerHTML] = component.render
