@@ -52,9 +52,18 @@ class Component
     end
   end
 
+  def self.bind_models(component)
+    JS.global[:document].getElementById(component.component_id).querySelectorAll('[r-model]').to_a.each do |element|
+      element.addEventListener('input') do |event|
+        component.public_send("#{element.getAttribute('r-model')}=", event[:target][:value])
+      end
+    end
+  end
+
   def self.rerender(component)
     JS.global[:document].getElementById(component.component_id)[:innerHTML] = component.render
     bind_events(component)
+    bind_models(component)
   end
 end
 
@@ -116,12 +125,27 @@ class RandomListComponent < Component
   end
 end
 
+class FormComponent < Component
+  attr_reactive :message
+
+  def initialize
+    @message = ''
+  end
+
+  def template
+    <<-ERB
+      <input type="text" r-model="message" value="<%= message %>">
+      <p>The message is: <%= message %></p>
+    ERB
+  end
+end
+
 JS.global[:document].querySelectorAll('[r-source]').to_a.each do |element|
   component_name = element.getAttribute('r-source').to_s
   # require_relative "./components/#{component_name}_component"
   component_class = Object.const_get("#{component_name}Component")
   component =
-    if element.getAttribute('r-data') != nil
+    if !element.getAttribute('r-data').nil?
       data = eval(element.getAttribute('r-data').to_s)
       component_class.new(**data)
     else
@@ -131,4 +155,5 @@ JS.global[:document].querySelectorAll('[r-source]').to_a.each do |element|
 
   element[:innerHTML] = component.render
   Component.bind_events(component)
+  Component.bind_models(component)
 end
