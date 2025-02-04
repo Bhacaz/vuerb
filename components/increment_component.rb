@@ -1,22 +1,34 @@
+# frozen_string_literal: true
+
 require_relative 'component'
 
 class IncrementComponent < Component
-  attr_accessor :count
+  attr_reactive :count
 
   def initialize(count:)
     @count = count
   end
 
   def increment
-    @count += 1
+    self.count += 1
+  end
+
+  def decrement
+    self.count -= 1
   end
 
   def template
-    <<~HTML_ERB
+    <<-ERB
       <div>
-        <h1>Count: #{@count}</h1>
+        <h1>Count: <%= count %></h1>
+        <% if count.even? %>
+          <h2>☝️</h2>
+        <% else %>
+          <h2>✌️</h2>
+        <% end %>
         <button r-on:click="increment">Increment</button>
+        <button r-on:click="decrement">Decrement</button>
       </div>
-    HTML_ERB
+    ERB
   end
 end

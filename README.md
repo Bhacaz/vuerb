@@ -1,5 +1,9 @@
 # ruby-web-framework-wasm
 
+```shell
+ruby -run -e httpd . -p 8000
+```
+
 Try to build a web framework in Ruby using ruby.wasm
 
 * Use ERB for templating
