@@ -10,9 +10,10 @@ class FormComponent < Component
   end
 
   def template
+    # r-text allow to know that the
     <<-ERB
       <input type="text" r-model="message" value="<%= message %>">
-      <p>The message is: <%= message %></p>
+      <p>The message is: <span r-bind="message"></span></p>
     ERB
   end
 end

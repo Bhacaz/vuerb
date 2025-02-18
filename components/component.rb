@@ -34,15 +34,21 @@ class Component
 
   def self.bind_models(component)
     JS.global[:document].getElementById(component.component_id).querySelectorAll('[r-model]').to_a.each do |element|
+      binding_name = element.getAttribute('r-model')
       element.addEventListener('input') do |event|
-        component.public_send("#{element.getAttribute('r-model')}=", event[:target][:value])
+        # puts event[:target][:value]
+        binding_name = event[:currentTarget].call(:getAttribute, 'r-model')
+        JS.global[:document].getElementById(component.component_id).querySelectorAll("[r-bind=#{binding_name}]").to_a.each do |binded_element|
+          binded_element[:innerHTML] = event[:target][:value]
+        end
+       # new_value = component.public_send("#{binding_name}=", event[:target][:value])
       end
     end
   end
 
   def self.rerender(component)
-    JS.global[:document].getElementById(component.component_id)[:innerHTML] = component.render
-    bind_events(component)
-    bind_models(component)
+    # JS.global[:document].getElementById(component.component_id)[:innerHTML] = component.render
+    # bind_events(component)
+   # bind_models(component)
   end
 end
