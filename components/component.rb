@@ -36,8 +36,8 @@ class Component
   # Channel names will looks like "component_name#component_id/attribute_name"
   # "ComponentForm#abc123/message"
   def self.bind_models(component)
-    JS.global[:document].getElementById(component.component_id).querySelectorAll('[r-bind]').to_a.each do |element|
-      binding_name = element.getAttribute('r-bind')
+    JS.global[:document].getElementById(component.component_id).querySelectorAll('[r-text]').to_a.each do |element|
+      binding_name = element.getAttribute('r-text')
       ::Bus.subscribe("#{component.component_id}/#{binding_name}") do |payload|
           element[:innerHTML] = payload[:value]
       end
