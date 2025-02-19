@@ -13,7 +13,7 @@ class FormComponent < Component
     # r-text allow to know that the
     <<-ERB
       <input type="text" r-model="message" value="<%= message %>">
-      <p>The message is: <span r-text="message"></span></p>
+      <p>The message is: <span r-text="message.upcase"></span></p>
     ERB
   end
 end

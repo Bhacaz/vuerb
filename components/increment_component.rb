@@ -21,11 +21,15 @@ class IncrementComponent < Component
     <<-ERB
       <div>
         <h1>Count: <span r-text="count"><%= count %></span></h1>
-        <% if count.even? %>
-          <h2>☝️</h2>
-        <% else %>
-          <h2>✌️</h2>
-        <% end %>
+
+        <div r-reactive>
+          <% if count.even? %>
+            <h2>☝️</h2>
+          <% else %>
+            <h2>✌️</h2>
+          <% end %>
+        </div>
+
         <button r-on:click="increment">Increment</button>
         <button r-on:click="decrement">Decrement</button>
       </div>
