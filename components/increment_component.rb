@@ -20,7 +20,7 @@ class IncrementComponent < Component
   def template
     <<-ERB
       <div>
-        <h1>Count: <%= count %></h1>
+        <h1>Count: <span r-bind="count"><%= count %></span></h1>
         <% if count.even? %>
           <h2>☝️</h2>
         <% else %>

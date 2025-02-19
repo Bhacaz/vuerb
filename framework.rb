@@ -6,6 +6,7 @@ require 'erb'
 require 'securerandom'
 
 require_relative 'lib/http'
+require_relative 'lib/bus'
 require_relative 'components/component'
 require_relative 'components/form_component'
 require_relative 'components/increment_component'

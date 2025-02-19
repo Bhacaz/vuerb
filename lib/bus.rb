@@ -8,6 +8,7 @@ class Bus
   end    
 
  def self.publish(channel, payload)
+  puts "Channel: #{channel}, payload: #{payload}"
   @subscribtions[channel]&.each do |handler|
     handler.call(payload)
   end
@@ -17,11 +18,3 @@ class Bus
   @subscribtions = {}
  end
 end
-
-
-Bus.subscribe('test') do |payload|
- puts 'hello'
- puts payload
-end
-
-Bus.publish('test', {a: 1})

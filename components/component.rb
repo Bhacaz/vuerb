@@ -1,12 +1,13 @@
 class Component
   def component_id
-    "#{self.class}-#{object_id}"
+    "#{self.class}##{object_id}"
   end
 
   def self.attr_reactive(attr)
     define_method("#{attr}=") do |value|
       instance_variable_set("@#{attr}", value)
-      self.class.rerender(self)
+      ::Bus.publish("#{component_id}/#{attr}", { value: value })
+      # self.class.rerender(self)
     end
 
     define_method(attr) do
@@ -32,16 +33,21 @@ class Component
     end
   end
 
+  # Channel names will looks like "component_name#component_id/attribute_name"
+  # "ComponentForm#abc123/message"
   def self.bind_models(component)
+    JS.global[:document].getElementById(component.component_id).querySelectorAll('[r-bind]').to_a.each do |element|
+      binding_name = element.getAttribute('r-bind')
+      ::Bus.subscribe("#{component.component_id}/#{binding_name}") do |payload|
+          element[:innerHTML] = payload[:value]
+      end
+    end
+
+
     JS.global[:document].getElementById(component.component_id).querySelectorAll('[r-model]').to_a.each do |element|
-      binding_name = element.getAttribute('r-model')
       element.addEventListener('input') do |event|
-        # puts event[:target][:value]
         binding_name = event[:currentTarget].call(:getAttribute, 'r-model')
-        JS.global[:document].getElementById(component.component_id).querySelectorAll("[r-bind=#{binding_name}]").to_a.each do |binded_element|
-          binded_element[:innerHTML] = event[:target][:value]
-        end
-       # new_value = component.public_send("#{binding_name}=", event[:target][:value])
+        component.public_send("#{binding_name}=", event[:target][:value])
       end
     end
   end
