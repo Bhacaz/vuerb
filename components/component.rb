@@ -41,6 +41,8 @@ class Component
         to_eval = element.getAttribute('r-text').to_s
         element[:innerHTML] = component.instance_eval(to_eval)
       end
+
+      r_show(component)
     end
 
     JS.global[:document].getElementById(component.component_id).querySelectorAll('[r-model]').to_a.each do |element|
@@ -48,6 +50,17 @@ class Component
         binding_name = event[:currentTarget].call(:getAttribute, 'r-model')
         component.public_send("#{binding_name}=", event[:target][:value].to_s)
       end
+    end
+
+    r_show(component)
+  end
+
+  def self.r_show(component)
+    JS.global[:document].getElementById(component.component_id).querySelectorAll('[r-show]').to_a.each do |element|
+      to_eval = element.getAttribute('r-show').to_s
+      to_show = component.instance_eval(to_eval)
+      element[:style].removeProperty('display') if to_show
+      element[:style].setProperty('display', 'none') unless to_show
     end
   end
 

@@ -22,13 +22,8 @@ class IncrementComponent < Component
       <div>
         <h1>Count: <span r-text="count"><%= count %></span></h1>
 
-        <div r-reactive>
-          <% if count.even? %>
-            <h2>☝️</h2>
-          <% else %>
-            <h2>✌️</h2>
-          <% end %>
-        </div>
+        <h2 r-show="count.odd?">☝️</h2>
+        <h2 r-show="count.even?">✌️</h2>
 
         <button r-on:click="increment">Increment</button>
         <button r-on:click="decrement">Decrement</button>
