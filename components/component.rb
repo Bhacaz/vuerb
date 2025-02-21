@@ -6,7 +6,7 @@ class Component
   def self.attr_reactive(attr)
     define_method("#{attr}=") do |value|
       instance_variable_set("@#{attr}", value)
-      ::Bus.publish(component_id, { attribute: attr, value: value })
+      ::Bus.publish(component_id, { component: self, attribute: attr, value: value })
       # self.class.rerender(self)
     end
 
@@ -15,12 +15,34 @@ class Component
     end
   end
 
-  def render
+  def render_as_string
     ERB.new(template).result(binding)
   end
 
+  # @return Array[JS::Object]
+  def render
+    body = JS.eval("return new DOMParser()")
+      .parseFromString(render_as_string, 'text/html')[:body]
+
+    body[:children].to_a.each do |node|
+      add_data_r_id_attribute(node)
+    end
+    body[:children]
+  end
+
+  def add_data_r_id_attribute(element)
+    element.setAttribute(data_r_id, '')
+    element[:children].to_a.each do |child|
+      add_data_r_id_attribute(child)
+    end
+  end
+
+  def data_r_id
+    "data-r-#{object_id}"
+  end
+
   def self.bind_events(component)
-    JS.global[:document].getElementById(component.component_id).querySelectorAll('[r-on\\:click]').to_a.each do |button|
+    JS.global[:document].querySelectorAll("[#{component.data_r_id}][r-on\\:click]").to_a.each do |button|
       button.addEventListener('click') do |_event|
         args = button.getAttribute('r-on:click').to_s
         component.instance_eval(args)

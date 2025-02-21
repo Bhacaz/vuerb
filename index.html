@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <title>Ruby Web Framework WASM</title>
     <link rel="stylesheet" href="https://matcha.mizu.sh/matcha.css">
-</head>
-<body>
-    <h1>Ruby Web Framework WASM</h1>
-    <h2>Should change</h2>
     <script type="module" src="main.js"></script>
     <script type="text/ruby" data-eval="async">
         # Patch require_relative to load from remote
@@ -34,8 +30,14 @@
         require_relative 'framework'
     </script>
 
-    <div r-source="Increment" r-data="{ count: 0 }"></div>
-    <div r-source="RandomList"></div>
-    <div r-source="Form"></div>
+</head>
+<body>
+    <h1>Ruby Web Framework WASM</h1>
+    <h2>Should change</h2>
+
+    <div id="app"></div>
+<!--    <div r-source="Increment" r-data="{ count: 0 }"></div>-->
+<!--    <div r-source="RandomList"></div>-->
+<!--    <div r-source="Form"></div>-->
 </body>
 </html>
