@@ -13,32 +13,9 @@ require_relative 'components/form_component'
 require_relative 'components/increment_component'
 require_relative 'components/random_list_component'
 
-puts RUBY_VERSION # => Hello, world! (printed to the browser console)
+puts RUBY_VERSION
 JS.global[:document].querySelector('h2').remove()
 # # puts Http.get('https://catfact.ninja/facts?limit=2')['data']
-
-# JS.global[:document].querySelectorAll('[r-source]').to_a.each do |element|
-#   component_name = element.getAttribute('r-source').to_s
-#   # require_relative "./components/#{component_name}_component"
-#   component_class = Object.const_get("#{component_name}Component")
-#   component =
-#     if element.getAttribute('r-data') != nil
-#       data = eval(element.getAttribute('r-data').to_s)
-#       component_class.new(**data)
-#     else
-#       component_class.new
-#     end
-#   element[:id] = component.component_id
-#
-#   element[:innerHTML] = component.render
-#   Component.bind_events(component)
-#   Component.bind_models(component)
-# end
-
-# parser = JS.eval('return new DOMParser()')
-# # puts parser
-#        .parseFromString(IncrementComponent.new(count: 0).render, 'text/html')[:body]
-#        .querySelectorAll('[r-on\\:click]').to_a
 
 NODE_TYPE_NODE = 1
 NODE_TYPE_TEXT = 3
@@ -72,8 +49,6 @@ observer = JS.global[:MutationObserver].new do |mutations|
             component_class.new
           end
         component_render = component.render
-#         puts "#{__FILE__}:#{__LINE__}\n"
-        p component_render[:length]
         node.replaceWith(*component_render)
         ::Bus.publish("AddedNodes/#{component.component_id}",
                       { component: component })
@@ -90,38 +65,41 @@ mount(
   app_dom
 )
 
-# Component.bind_events(v_app)
-
 ::Bus.subscribe(%r{AddedNodes/.*}) do |payload|
   component = payload[:component]
   nodes = payload[:nodes]
 
   Component.bind_events(component, nodes)
+  Component.bind_models(component, nodes)
 end
 
 ::Bus.subscribe(%r{Reactive/.*}) do |payload|
   component = payload[:component]
 
-  from_real_dom = nodes_for_data_r_id(component.data_r_id).to_a
-  from_rerender = component.render.to_a
-  # puts from_real_dom.to_a.map { |node| node[:outerHTML] }.join("\n")
-  # puts from_rerender.to_a.map { |node| node[:outerHTML] }.join("\n")
-  from_real_dom.zip(from_rerender).each do |real_dom, rerender|
-    patch = diff(real_dom, rerender)
-    patch.call(real_dom)
-  end
+  from_real_dom = JS.global[:document].getElementById(component.component_id)
+  from_rerender = component.render.to_a[0]
 
-  puts from_real_dom.map { |node| node[:outerHTML] }.join("\n")
-  puts from_rerender.map { |node| node[:outerHTML] }.join("\n")
+  puts "#{__FILE__}:#{__LINE__}\n"
+  # puts from_real_dom.size
+  # puts from_rerender.size
+  # puts from_real_dom.each_with_index.map { |node, i| "#{i}: #{node[:outerHTML]}" }.join("\n")
+  # puts from_real_dom.map { |node| node[:outerHTML] }.join("\n")
+  puts from_rerender[:outerHTML]
 
-  if from_rerender.size > from_real_dom.size
-    from_rerender.drop(from_real_dom.size).each do |node|
-      from_real_dom.first[:parentNode].appendChild(node)
-    end
-  end
+  patch = diff(from_real_dom, from_rerender, component)
+  patch.call(from_real_dom)
+  # from_real_dom.zip(from_rerender).each do |real_dom, rerender|
+  #   patch.call(real_dom)
+  # end
+  #
+  # if from_rerender.size > from_real_dom.size
+  #   from_rerender.drop(from_real_dom.size).each do |node|
+  #     from_real_dom.first[:parentNode].appendChild(node)
+  #   end
+  # end
 end
 
-def diff(old_dom, new_dom)
+def diff(old_dom, new_dom, component)
   # puts "#{__FILE__}:#{__LINE__}\n\n"
   # p old_dom[:outerHTML] if old_dom != nil
   # p new_dom[:outerHTML] if new_dom != nil
@@ -148,7 +126,7 @@ def diff(old_dom, new_dom)
   end
 
   attr_patches = diff_attributes(old_dom[:attributes], new_dom[:attributes])
-  children_patched = diff_children(old_dom[:childNodes].to_a, new_dom[:childNodes].to_a)
+  children_patched = diff_children(old_dom[:childNodes].to_a, new_dom[:childNodes].to_a, component)
   ->(node) do
     attr_patches.call(node)
     children_patched.call(node)
@@ -174,14 +152,14 @@ def diff_attributes(old_attrs, new_attrs)
   ->(node) { patches.each { |patch| patch.call(node) }; node }
 end
 
-def diff_children(old_children, new_children)
+def diff_children(old_children, new_children, component)
   child_patches =
     old_children.each_with_index.map do |old_child, i|
-      diff(old_child, new_children[i])
+      diff(old_child, new_children[i], component)
     end
 
   addition_patches = new_children.drop(old_children.size).map do |new_child|
-    ->(node) { node.appendChild(new_child); node }
+    ->(node) { node.appendChild(new_child); Component.bind_events(component, [new_child]); node }
   end
 
   ->(node) do
@@ -196,11 +174,3 @@ def diff_children(old_children, new_children)
     node
   end
 end
-
-# v_new_dom = IncrementComponent.new(count: 0).render
-
-# patch is a list of functions to call to update the DOM
-# patch = diff(app_dom('app')[:childNodes], v_new_dom)
-
-
-

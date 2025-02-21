@@ -21,8 +21,19 @@ class Component
 
   # @return Array[JS::Object]
   def render
+    string = render_as_string
+    unless self.class.name == 'App'
+      # LIMITATION: adding root div to a component because only using querySelectorAll(r-v-id) to find elements
+      #   was finding/processing child element twice
+      string = <<-HTML
+        <div id="#{component_id}">
+          #{string}
+        </div>
+      HTML
+    end
+
     body = JS.global[:DOMParser].new
-      .parseFromString(render_as_string, 'text/html')[:body]
+      .parseFromString(string, 'text/html')[:body]
 
     body[:children].to_a.each do |node|
       add_data_r_id_attribute(node)
@@ -44,43 +55,37 @@ class Component
   def self.bind_events(component, nodes = nil)
     nodes =
       if nodes != nil
+        nodes.to_a.select { |node| node[:nodeType] == NODE_TYPE_NODE && node.getAttribute('r-on:click') != nil }
+      else
+        JS.global[:document].getElementById(component.component_id).querySelectorAll("[r-on\\:click]").to_a
+      end
+
+    nodes.each do |element|
+      element.addEventListener('click') do |_event|
+        args = element.getAttribute('r-on:click').to_s
+        component.instance_eval(args)
+      end
+    end
+  end
+
+  def self.bind_models(component, nodes = nil)
+    nodes =
+      if nodes != nil
         nodes.to_a
       else
         JS.global[:document].querySelectorAll("[#{component.data_r_id}]").to_a
       end
 
     nodes.each do |element|
-      descendants = element.querySelectorAll('[r-on\\:click]').to_a
-      descendants << element if element.getAttribute('r-on:click') != nil
+      descendants = element.querySelectorAll('[r-model]').to_a
+      descendants << element if element.getAttribute('r-model') != nil
       descendants.each do |node|
-        node.addEventListener('click') do |_event|
-          args = node.getAttribute('r-on:click').to_s
-          component.instance_eval(args)
+        node.addEventListener('input') do |event|
+          binding_name = event[:currentTarget].call(:getAttribute, 'r-model')
+          component.public_send("#{binding_name}=", event[:target][:value].to_s)
         end
       end
     end
-  end
-
-  # Channel names will looks like "component_name#component_id/attribute_name"
-  # "ComponentForm#abc123/message"
-  def self.bind_models(component)
-    ::Bus.subscribe(component.component_id) do |payload|
-      JS.global[:document].getElementById(component.component_id).querySelectorAll('[r-text]').to_a.each do |element|
-        to_eval = element.getAttribute('r-text').to_s
-        element[:innerHTML] = component.instance_eval(to_eval)
-      end
-
-      r_show(component)
-    end
-
-    JS.global[:document].getElementById(component.component_id).querySelectorAll('[r-model]').to_a.each do |element|
-      element.addEventListener('input') do |event|
-        binding_name = event[:currentTarget].call(:getAttribute, 'r-model')
-        component.public_send("#{binding_name}=", event[:target][:value].to_s)
-      end
-    end
-
-    r_show(component)
   end
 
   def self.r_show(component)
