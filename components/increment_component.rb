@@ -22,6 +22,14 @@ class IncrementComponent < Component
       <h1>The count is: <%= count %></h1>
       <button r-on:click="increment">Increment</button>
       <button r-on:click="decrement">Decrement</button>
+      <% if count.odd? %>
+        <h2>Odd</h2>
+      <% else %>
+        <h3>Even</h3>
+      <% end %>
+      <% if count.even? %>
+        <h2>Even again</h2>
+      <% end %>
     ERB
   end
 

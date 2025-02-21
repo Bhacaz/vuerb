@@ -73,26 +73,29 @@ end
 Component.bind_events(v_app)
 
 def diff(old_dom, new_dom)
-  puts "#{__FILE__}:#{__LINE__}\n"
-  p old_dom[:outerHTML]
-  p new_dom[:outerHTML]
+  puts "#{__FILE__}:#{__LINE__}\n\n"
+  # p old_dom[:outerHTML]
+  # p new_dom[:outerHTML]
   if new_dom == nil
-    old_dom.remove()
+    return old_dom.remove()
   end
 
   # String change
   if old_dom[:nodeType] == NODE_TYPE_TEXT && new_dom[:nodeType] == NODE_TYPE_TEXT
     puts "#{__FILE__}:#{__LINE__}\n"
+    puts old_dom[:textContent]
+    puts new_dom[:textContent]
     if old_dom[:textContent] != new_dom[:textContent]
-      old_dom.replaceWith(new_dom)
+      return old_dom.replaceWith(new_dom)
     else
-      old_dom
+      return old_dom
     end
   end
 
   # Tag change
   if old_dom[:tagName] != new_dom[:tagName]
-    old_dom.replaceWith(new_dom)
+    puts "#{__FILE__}:#{__LINE__}\n"
+    return old_dom.replaceWith(new_dom)
   end
 
   diff_children(old_dom[:childNodes], new_dom[:childNodes])
