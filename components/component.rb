@@ -41,11 +41,22 @@ class Component
     "data-r-#{object_id}"
   end
 
-  def self.bind_events(component)
-    JS.global[:document].querySelectorAll("[#{component.data_r_id}][r-on\\:click]").to_a.each do |button|
-      button.addEventListener('click') do |_event|
-        args = button.getAttribute('r-on:click').to_s
-        component.instance_eval(args)
+  def self.bind_events(component, nodes = nil)
+    nodes =
+      if nodes != nil
+        nodes.to_a
+      else
+        JS.global[:document].querySelectorAll("[#{component.data_r_id}]").to_a
+      end
+
+    nodes.each do |element|
+      descendants = element.querySelectorAll('[r-on\\:click]').to_a
+      descendants << element if element.getAttribute('r-on:click') != nil
+      descendants.each do |node|
+        node.addEventListener('click') do |_event|
+          args = node.getAttribute('r-on:click').to_s
+          component.instance_eval(args)
+        end
       end
     end
   end

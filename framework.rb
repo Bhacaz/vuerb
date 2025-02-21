@@ -59,6 +59,8 @@ end
 observer = JS.global[:MutationObserver].new do |mutations|
   mutations.to_a.each do |mutation|
     mutation[:addedNodes].to_a.each do |node|
+      next unless node[:nodeType] == NODE_TYPE_NODE
+
       if node.getAttribute('r-source') != nil
         component_name = node.getAttribute('r-source').to_s
         component_class = Object.const_get("#{component_name}Component")
@@ -69,7 +71,12 @@ observer = JS.global[:MutationObserver].new do |mutations|
           else
             component_class.new
           end
-        node.replaceWith(*component.render)
+        component_render = component.render
+        puts "#{__FILE__}:#{__LINE__}\n"
+        p component_render[:length]
+        node.replaceWith(*component_render)
+        ::Bus.publish("AddedNodes/#{component.component_id}",
+                      { component: component })
       end
     end
   end
@@ -77,14 +84,20 @@ end
 
 observer.observe(app_dom, { childList: true, subtree: true })
 
-# v_app = IncrementComponent.new(count: 0)
 v_app = App.new
 mount(
   v_app.render,
   app_dom
 )
 
-Component.bind_events(v_app)
+# Component.bind_events(v_app)
+
+::Bus.subscribe(%r{AddedNodes/.*}) do |payload|
+  component = payload[:component]
+  nodes = payload[:nodes]
+
+  Component.bind_events(component, nodes)
+end
 
 ::Bus.subscribe(%r{Reactive/.*}) do |payload|
   component = payload[:component]
@@ -118,7 +131,6 @@ def diff(old_dom, new_dom)
 
   # Tag change
   if old_dom[:tagName] != new_dom[:tagName]
-    puts "#{__FILE__}:#{__LINE__}\n"
     return old_dom.replaceWith(new_dom)
   end
 
