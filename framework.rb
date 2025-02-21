@@ -138,14 +138,31 @@ def diff(old_dom, new_dom)
     return ->(node) { node.replaceWith(new_dom); new_dom }
   end
 
-  # diff_attributes(old_dom[:attributes], new_dom[:attributes])
-  diff_children(old_dom[:childNodes].to_a, new_dom[:childNodes].to_a)
+  attr_patches = diff_attributes(old_dom[:attributes], new_dom[:attributes])
+  children_patched = diff_children(old_dom[:childNodes].to_a, new_dom[:childNodes].to_a)
+  ->(node) do
+    attr_patches.call(node)
+    children_patched.call(node)
+    node
+  end
 end
 
 def diff_attributes(old_attrs, new_attrs)
-  new_attrs.each do |k, v|
+  patches = []
+  new_attrs.to_a.each do |attr|
+    next if attr[:name].to_s.start_with?('r-on')
 
+    patches << ->(node) { node.setAttribute(attr[:name], attr[:value]); node }
   end
+
+  old_attrs.to_a.each do |attr|
+    next if attr[:name].to_s.start_with?('r-on')
+
+    if new_attrs.getNamedItem(attr[:name]) == nil
+      patches << ->(node) { node.removeAttribute(attr[:name]); node }
+    end
+  end
+  ->(node) { patches.each { |patch| patch.call(node) }; node }
 end
 
 def diff_children(old_children, new_children)

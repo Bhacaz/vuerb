@@ -19,9 +19,10 @@ class IncrementComponent < Component
 
   def template
     <<-ERB
-      <h1>The count is: <%= count %></h1>
+      <h1 <%= count.odd? ? 'style="background-color: red"' : 'class="blue"' %>>The count is: <%= count %></h1>
       <button r-on:click="increment">Increment</button>
       <button r-on:click="decrement">Decrement</button>
+      <button r-on:click="self.count = 0">Reset</button>
       <% if count.odd? %>
         <h2>Odd</h2>
       <% else %>
