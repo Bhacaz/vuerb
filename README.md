@@ -4,6 +4,10 @@
 ruby -run -e httpd . -p 8000
 ```
 
+## Notes
+
+* https://dev.to/ycmjason/building-a-simple-virtual-dom-from-scratch-3d05
+
 Try to build a web framework in Ruby using ruby.wasm
 
 * Use ERB for templating
