@@ -8,12 +8,13 @@ require 'securerandom'
 require_relative 'lib/http'
 require_relative 'lib/bus'
 require_relative 'components/component'
+require_relative 'app'
 require_relative 'components/form_component'
 require_relative 'components/increment_component'
 require_relative 'components/random_list_component'
 
 puts RUBY_VERSION # => Hello, world! (printed to the browser console)
-JS.global[:document].querySelector('h2')[:innerHTML] = 'Hello world'
+JS.global[:document].querySelector('h2').remove()
 # puts Http.get('https://catfact.ninja/facts?limit=2')['data']
 
 # JS.global[:document].querySelectorAll('[r-source]').to_a.each do |element|
@@ -44,6 +45,7 @@ NODE_TYPE_TEXT = 3
 
 def mount(element, target)
   target.replaceChildren(*element)
+
 end
 
 def app_dom(id = 'app')
@@ -54,13 +56,37 @@ def nodes_for_data_r_id(data_r_id)
   JS.global[:document].querySelectorAll("[#{data_r_id}]")
 end
 
-v_app = IncrementComponent.new(count: 0)
+observer = JS.global[:MutationObserver].new do |mutations|
+  mutations.to_a.each do |mutation|
+    mutation[:addedNodes].to_a.each do |node|
+      if node.getAttribute('r-source') != nil
+        component_name = node.getAttribute('r-source').to_s
+        component_class = Object.const_get("#{component_name}Component")
+        component =
+          if node.getAttribute('r-data') != nil
+            data = eval(node.getAttribute('r-data').to_s)
+            component_class.new(**data)
+          else
+            component_class.new
+          end
+        node.replaceWith(*component.render)
+      end
+    end
+  end
+end
+
+observer.observe(app_dom, { childList: true, subtree: true })
+
+# v_app = IncrementComponent.new(count: 0)
+v_app = App.new
 mount(
   v_app.render,
   app_dom
 )
 
-::Bus.subscribe(/.*/) do |payload|
+Component.bind_events(v_app)
+
+::Bus.subscribe(%r{Reactive/.*}) do |payload|
   component = payload[:component]
 
   from_real_dom = nodes_for_data_r_id(component.data_r_id)
@@ -69,8 +95,6 @@ mount(
   puts from_rerender.to_a.map { |node| node[:outerHTML] }.join("\n")
   diff_children(from_real_dom, from_rerender)
 end
-
-Component.bind_events(v_app)
 
 def diff(old_dom, new_dom)
   puts "#{__FILE__}:#{__LINE__}\n\n"

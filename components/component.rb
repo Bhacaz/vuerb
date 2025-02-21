@@ -6,7 +6,7 @@ class Component
   def self.attr_reactive(attr)
     define_method("#{attr}=") do |value|
       instance_variable_set("@#{attr}", value)
-      ::Bus.publish(component_id, { component: self, attribute: attr, value: value })
+      ::Bus.publish("Reactive/#{component_id}", { component: self, attribute: attr, value: value })
       # self.class.rerender(self)
     end
 
@@ -21,7 +21,7 @@ class Component
 
   # @return Array[JS::Object]
   def render
-    body = JS.eval("return new DOMParser()")
+    body = JS.global[:DOMParser].new
       .parseFromString(render_as_string, 'text/html')[:body]
 
     body[:children].to_a.each do |node|
