@@ -31,6 +31,10 @@ class IncrementComponent < Component
       <% if count.even? %>
         <h2>Even again</h2>
       <% end %>
+      
+      <% count.times do |i| %>
+        <p><%= i %></p>
+      <% end %>
     ERB
   end
 

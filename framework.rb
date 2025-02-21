@@ -103,7 +103,6 @@ end
   component = payload[:component]
 
   from_real_dom = nodes_for_data_r_id(component.data_r_id).to_a
-  puts component.render_as_string
   from_rerender = component.render.to_a
   # puts from_real_dom.to_a.map { |node| node[:outerHTML] }.join("\n")
   # puts from_rerender.to_a.map { |node| node[:outerHTML] }.join("\n")
@@ -114,8 +113,7 @@ end
 
   puts from_real_dom.map { |node| node[:outerHTML] }.join("\n")
   puts from_rerender.map { |node| node[:outerHTML] }.join("\n")
-  puts from_real_dom.size
-  puts from_rerender.size
+
   if from_rerender.size > from_real_dom.size
     from_rerender.drop(from_real_dom.size).each do |node|
       from_real_dom.first[:parentNode].appendChild(node)
