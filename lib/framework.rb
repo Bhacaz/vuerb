@@ -5,13 +5,12 @@ require 'json'
 require 'erb'
 require 'securerandom'
 
-require_relative 'lib/http'
-require_relative 'lib/bus'
-require_relative 'components/component'
-require_relative 'app'
-require_relative 'components/form_component'
-require_relative 'components/increment_component'
-require_relative 'components/random_list_component'
+require_relative 'bus'
+require_relative '../components/component'
+require_relative '../app'
+require_relative '../components/form_component'
+require_relative '../components/increment_component'
+require_relative '../components/random_list_component'
 
 puts RUBY_VERSION
 JS.global[:document].querySelector('h2').remove()
@@ -114,7 +113,7 @@ def diff(old_dom, new_dom, component)
   if old_dom[:nodeType] == NODE_TYPE_TEXT && new_dom[:nodeType] == NODE_TYPE_TEXT
     if old_dom[:textContent] != new_dom[:textContent]
       return ->(node) do
-        node[:textContent] = new_dom[:textContent]
+        node.replaceWith(new_dom)
         new_dom
       end
     else

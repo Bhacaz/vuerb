@@ -2,12 +2,12 @@
 
 require_relative './components/component'
 require_relative './components/todo_component'
+require_relative './components/counter_component'
 
 class App < Component
   def template
     <<-ERB
-      <h1>Ruby WEB Framework</h1>
-      <div r-source="Todo"></div>
+      <div r-source="Counter"></div>
     ERB
   end
 end
