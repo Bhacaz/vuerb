@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative './component'
+
 class CounterComponent < Component
   attr_reactive :count
 
