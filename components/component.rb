@@ -35,7 +35,7 @@ class Component
       add_data_r_id_attribute(node)
     end
 
-    body[:children].to_a
+    body[:childNodes].to_a
   end
 
   def add_data_r_id_attribute(element)
@@ -50,7 +50,6 @@ class Component
   end
 
   def self.bind_events(component, nodes = nil)
-    # p nodes[1][:outerHTML] if nodes != nil
     nodes =
       if nodes != nil
         nodes = nodes.to_a.select { |node| node[:nodeType] == NODE_TYPE_NODE }
@@ -63,9 +62,11 @@ class Component
       end
 
     nodes.each do |element|
-      element.addEventListener('click') do |_event|
-        args = element.getAttribute('r-on:click').to_s
+      element.addEventListener('click') do |event|
+        args = event[:target].getAttribute('r-on:click').to_s
         component.instance_eval(args)
+        # Need to return an object that respond to to_js.
+        nil
       end
     end
   end

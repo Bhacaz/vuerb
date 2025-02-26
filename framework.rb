@@ -82,33 +82,30 @@ end
   new_rerender = component.render
   new_current_node_list = []
 
-  puts "#{__FILE__}:#{__LINE__}\n"
   # puts from_real_dom.size
   # puts from_rerender.size
   # puts current_node_list.each_with_index.map { |node, i| "#{i}: #{node[:textContent]}" }.join("\n")
   # puts new_rerender.map { |node| node[:textContent] }.join("\n")
   # puts new_rerender[:outerHTML]
 
-  puts current_node_list.size
   current_node_list.zip(new_rerender).each do |current_node, rerender|
     patch = diff(current_node, rerender, component)
     new_current_node_list << patch.call(current_node)
   end
 
-  puts current_node_list.size
   if new_rerender.size > current_node_list.size
     new_rerender[current_node_list.size..].each do |node|
       component.parent_node.appendChild(node)
+      Component.bind_events(component, [node])
       new_current_node_list << node
     end
   end
+
   component.current_nodes = new_current_node_list.compact
+
 end
 
 def diff(old_dom, new_dom, component)
-  # puts "#{__FILE__}:#{__LINE__}\n\n"
-  # p old_dom[:outerHTML] if old_dom != nil
-  # p new_dom[:outerHTML] if new_dom != nil
   if new_dom == nil
     return ->(node) { node.remove(); nil }
   end
@@ -116,7 +113,10 @@ def diff(old_dom, new_dom, component)
   # String change
   if old_dom[:nodeType] == NODE_TYPE_TEXT && new_dom[:nodeType] == NODE_TYPE_TEXT
     if old_dom[:textContent] != new_dom[:textContent]
-      return ->(node) { node.replaceWith(new_dom); new_dom }
+      return ->(node) do
+        node[:textContent] = new_dom[:textContent]
+        new_dom
+      end
     else
       return ->(node) { node }
     end
@@ -124,7 +124,11 @@ def diff(old_dom, new_dom, component)
 
   # Tag change
   if old_dom[:tagName] != new_dom[:tagName]
-    return ->(node) { node.replaceWith(new_dom); new_dom }
+    return ->(node) do
+      node.replaceWith(new_dom)
+      Component.bind_events(component, [new_dom])
+      new_dom
+    end
   end
 
   attr_patches = diff_attributes(old_dom[:attributes], new_dom[:attributes])
@@ -139,14 +143,10 @@ end
 def diff_attributes(old_attrs, new_attrs)
   patches = []
   new_attrs.to_a.each do |attr|
-    next if attr[:name].to_s.start_with?('r-on')
-
     patches << ->(node) { node.setAttribute(attr[:name], attr[:value]); node }
   end
 
   old_attrs.to_a.each do |attr|
-    next if attr[:name].to_s.start_with?('r-on')
-
     if new_attrs.getNamedItem(attr[:name]) == nil
       patches << ->(node) { node.removeAttribute(attr[:name]); node }
     end
@@ -161,7 +161,11 @@ def diff_children(old_children, new_children, component)
     end
 
   addition_patches = new_children.drop(old_children.size).map do |new_child|
-    ->(node) { node.appendChild(new_child); Component.bind_events(component, [new_child]); new_child }
+    ->(node) {
+      node.appendChild(new_child)
+      Component.bind_events(component, [new_child])
+      new_child
+    }
   end
 
   ->(node) do

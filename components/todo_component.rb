@@ -18,7 +18,7 @@ class TodoComponent < Component
   end
 
   def done(uuid)
-    todo = todos.find { |t| t.uuid == uuid }
+    todo = todos.detect { |t| t.uuid == uuid }
     todo.completed = true
     self.todos = todos
   end
