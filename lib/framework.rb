@@ -8,9 +8,6 @@ require 'securerandom'
 require_relative 'bus'
 require_relative '../components/component'
 require_relative '../app'
-require_relative '../components/form_component'
-require_relative '../components/increment_component'
-require_relative '../components/random_list_component'
 
 puts RUBY_VERSION
 JS.global[:document].querySelector('h2').remove()
