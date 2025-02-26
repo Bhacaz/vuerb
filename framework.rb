@@ -48,8 +48,10 @@ observer = JS.global[:MutationObserver].new do |mutations|
           else
             component_class.new
           end
+        component.parent_node = node[:parentNode]
         component_render = component.render
         node.replaceWith(*component_render)
+        component.current_nodes = component_render
         ::Bus.publish("AddedNodes/#{component.component_id}",
                       { component: component })
       end
@@ -76,27 +78,31 @@ end
 ::Bus.subscribe(%r{Reactive/.*}) do |payload|
   component = payload[:component]
 
-  from_real_dom = JS.global[:document].getElementById(component.component_id)
-  from_rerender = component.render.to_a[0]
+  current_node_list = component.current_nodes
+  new_rerender = component.render
+  new_current_node_list = []
 
   puts "#{__FILE__}:#{__LINE__}\n"
   # puts from_real_dom.size
   # puts from_rerender.size
-  # puts from_real_dom.each_with_index.map { |node, i| "#{i}: #{node[:outerHTML]}" }.join("\n")
-  # puts from_real_dom.map { |node| node[:outerHTML] }.join("\n")
-  puts from_rerender[:outerHTML]
+  # puts current_node_list.each_with_index.map { |node, i| "#{i}: #{node[:textContent]}" }.join("\n")
+  # puts new_rerender.map { |node| node[:textContent] }.join("\n")
+  # puts new_rerender[:outerHTML]
 
-  patch = diff(from_real_dom, from_rerender, component)
-  patch.call(from_real_dom)
-  # from_real_dom.zip(from_rerender).each do |real_dom, rerender|
-  #   patch.call(real_dom)
-  # end
-  #
-  # if from_rerender.size > from_real_dom.size
-  #   from_rerender.drop(from_real_dom.size).each do |node|
-  #     from_real_dom.first[:parentNode].appendChild(node)
-  #   end
-  # end
+  puts current_node_list.size
+  current_node_list.zip(new_rerender).each do |current_node, rerender|
+    patch = diff(current_node, rerender, component)
+    new_current_node_list << patch.call(current_node)
+  end
+
+  puts current_node_list.size
+  if new_rerender.size > current_node_list.size
+    new_rerender[current_node_list.size..].each do |node|
+      component.parent_node.appendChild(node)
+      new_current_node_list << node
+    end
+  end
+  component.current_nodes = new_current_node_list.compact
 end
 
 def diff(old_dom, new_dom, component)
@@ -109,12 +115,8 @@ def diff(old_dom, new_dom, component)
 
   # String change
   if old_dom[:nodeType] == NODE_TYPE_TEXT && new_dom[:nodeType] == NODE_TYPE_TEXT
-#     puts "#{__FILE__}:#{__LINE__}\n"
-#     puts old_dom[:textContent]
-#     puts new_dom[:textContent]
     if old_dom[:textContent] != new_dom[:textContent]
-#       puts "#{__FILE__}:#{__LINE__}\n"
-      return ->(node) { node[:textContent] = new_dom[:textContent]; new_dom }
+      return ->(node) { node.replaceWith(new_dom); new_dom }
     else
       return ->(node) { node }
     end
@@ -159,7 +161,7 @@ def diff_children(old_children, new_children, component)
     end
 
   addition_patches = new_children.drop(old_children.size).map do |new_child|
-    ->(node) { node.appendChild(new_child); Component.bind_events(component, [new_child]); node }
+    ->(node) { node.appendChild(new_child); Component.bind_events(component, [new_child]); new_child }
   end
 
   ->(node) do

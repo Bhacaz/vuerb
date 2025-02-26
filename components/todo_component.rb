@@ -1,25 +1,26 @@
 # frozen_string_literal: true
 
 require_relative 'component'
+require 'securerandom'
 
 class TodoComponent < Component
+  Todo = Struct.new(:uuid, :title, :completed)
+
   attr_reactive :todos
-  attr_reactive :done_todos
   attr_reactive :new_todo
 
   def initialize(todos: [])
     @todos = todos
-    @done_todos = []
   end
 
   def add_todo
-    self.todos += [new_todo]
+    self.todos += [Todo.new(SecureRandom.uuid, new_todo, false)]
   end
 
-  def done(i)
-    todo = todos[i]
-    self.todos -= [todo]
-    self.done_todos += [todo]
+  def done(uuid)
+    todo = todos.find { |t| t.uuid == uuid }
+    todo.completed = true
+    self.todos = todos
   end
 
   def template
@@ -27,19 +28,19 @@ class TodoComponent < Component
       <h1>Todos</h1>
       <input type="text" r-model="new_todo">
       <button r-on:click="add_todo">Add Todo</button>
-      <ul>
-        <% todos.reverse.each_with_index do |todo, i| %>
-          <li><%= todo %></li>
-          <button r-on:click="done(<%= i %>)">Done</button>
+      <% todos.reverse.each do |todo| %>
+        <% if todo.completed %>
+          <div>
+            <button disabled>Done</button>
+            <s><%= todo.title %></s>
+          </div>
+        <% else %>
+          <div>
+            <button r-on:click="done('<%= todo.uuid %>')">Done</button>
+            <%= todo.title %>
+          </div>
         <% end %>
-      </ul>
-      
-      <h2>Done Todos</h2>
-      <ul>
-        <% done_todos.each do |todo| %>
-          <li><s><%= todo %></s></li>
-        <% end %>
-      </ul>
+      <% end %>
     ERB
   end
 end

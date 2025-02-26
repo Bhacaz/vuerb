@@ -1,4 +1,10 @@
 class Component
+  attr_accessor :parent_node, :current_nodes
+
+  def initialize
+    @current_nodes = []
+  end
+
   def component_id
     "#{self.class}##{object_id}"
   end
@@ -21,24 +27,15 @@ class Component
 
   # @return Array[JS::Object]
   def render
-    string = render_as_string
-    unless self.class.name == 'App'
-      # LIMITATION: adding root div to a component because only using querySelectorAll(r-v-id) to find elements
-      #   was finding/processing child element twice
-      string = <<-HTML
-        <div id="#{component_id}">
-          #{string}
-        </div>
-      HTML
-    end
-
     body = JS.global[:DOMParser].new
-      .parseFromString(string, 'text/html')[:body]
+             .parseFromString(render_as_string, 'text/html')[:body]
 
+    # childNodes return string node and cannot attribute
     body[:children].to_a.each do |node|
       add_data_r_id_attribute(node)
     end
-    body[:children]
+
+    body[:children].to_a
   end
 
   def add_data_r_id_attribute(element)
@@ -53,11 +50,16 @@ class Component
   end
 
   def self.bind_events(component, nodes = nil)
+    # p nodes[1][:outerHTML] if nodes != nil
     nodes =
       if nodes != nil
-        nodes.to_a.select { |node| node[:nodeType] == NODE_TYPE_NODE && node.getAttribute('r-on:click') != nil }
+        nodes = nodes.to_a.select { |node| node[:nodeType] == NODE_TYPE_NODE }
+        children_nodes = nodes.flat_map { |node| node.querySelectorAll('[r-on\\:click]').to_a }
+        nodes.each do |node|
+          children_nodes << node if node.hasAttribute('r-on:click')
+        end
       else
-        JS.global[:document].getElementById(component.component_id).querySelectorAll("[r-on\\:click]").to_a
+        JS.global[:document][:body].querySelectorAll("[#{component.data_r_id}][r-on\\:click]").to_a
       end
 
     nodes.each do |element|

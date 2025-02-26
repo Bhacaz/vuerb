@@ -7,6 +7,9 @@ ruby -run -e httpd . -p 8000
 ## Notes
 
 * https://dev.to/ycmjason/building-a-simple-virtual-dom-from-scratch-3d05
+* https://github.com/ycmjason-talks/2018-11-21-manc-web-meetup-4/blob/master/src/vdom/diff.js
+* https://todomvc.com/examples/vue/dist/#/
+* https://github.com/tastejs/todomvc/blob/gh-pages/examples/vue/src/components/TodoItem.vue
 
 Try to build a web framework in Ruby using ruby.wasm
 
