@@ -23,6 +23,8 @@ class CounterComponent < Component
 end
 ```
 
+See it live https://bhacaz.github.io/vuerb/
+
 ## Notes
 
 * https://dev.to/ycmjason/building-a-simple-virtual-dom-from-scratch-3d05
