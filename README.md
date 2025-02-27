@@ -4,7 +4,7 @@ A web client framework to build reactive web app in Ruby with WebAssembly.
 
 ## Concept
 
-The framwork use only standard Ruby libs wichi include `ERB` to render HTML.
+The framwork use only standard Ruby libs which include `ERB` to render HTML.
 The render is then morphed to the actual DOM.
 
 It need less directive like `v-if` or `v-for` because it can be done using Ruby and `ERB`.
@@ -102,7 +102,7 @@ To help during morphing.
 
 ```html
 <% todos.each do |todo|
- <div data-key=<% todo.id %>>
+ <div data-key=<%= todo.id %>>
   <h1><%= todo.title %></h1>
  </div>
 <% end %>
