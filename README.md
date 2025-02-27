@@ -1,6 +1,6 @@
 # vuerb
 
-A web client framework to build reactive web app in Ruby with WASM.
+A web client framework to build reactive web app in Ruby with WebAssembly.
 
 ## Concept
 
