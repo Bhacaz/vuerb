@@ -23,7 +23,9 @@ class CounterComponent < Component
 end
 ```
 
-See it live https://bhacaz.github.io/vuerb/
+See it live https://bhacaz.github.io/vuerb/counter
+
+More [example](https://github.com/Bhacaz/vuerb/blob/gh-pages/README.md).
 
 ## Directives
 
