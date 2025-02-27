@@ -25,6 +25,21 @@ end
 
 See it live https://bhacaz.github.io/vuerb/
 
+## Directives
+
+### r-on:
+
+- click
+- change
+
+### r-model
+
+### r-source
+
+### r-data
+
+### data-key (each)
+
 ## Notes
 
 * https://dev.to/ycmjason/building-a-simple-virtual-dom-from-scratch-3d05

@@ -50,20 +50,27 @@ class Component
   end
 
   def self.bind_events(component, nodes = nil)
+    %w[click change].each do |event|
+      bind_events_for(component, event, nodes)
+    end
+  end
+
+  def self.bind_events_for(component, event_name, nodes = nil)
     nodes =
       if nodes != nil
         nodes = nodes.to_a.select { |node| node[:nodeType] == NODE_TYPE_NODE }
-        children_nodes = nodes.flat_map { |node| node.querySelectorAll('[r-on\\:click]').to_a }
+        children_nodes = nodes.flat_map { |node| node.querySelectorAll("[r-on\\:#{event_name}]").to_a }
         nodes.each do |node|
-          children_nodes << node if node.hasAttribute('r-on:click')
+          children_nodes << node if node.hasAttribute("r-on:#{event_name}") == JS::True
         end
+        children_nodes
       else
-        JS.global[:document][:body].querySelectorAll("[#{component.data_r_id}][r-on\\:click]").to_a
+        # JS.global[:document][:body].querySelectorAll("[#{component.data_r_id}][r-on\\:#{event_name}]").to_a
       end
-
+  
     nodes.each do |element|
-      element.addEventListener('click') do |event|
-        args = event[:target].getAttribute('r-on:click').to_s
+      element.addEventListener(event_name) do |event|
+        args = event[:target].getAttribute("r-on:#{event_name}").to_s
         component.instance_eval(args)
         # Need to return an object that respond to to_js.
         nil
@@ -74,7 +81,7 @@ class Component
   def self.bind_models(component, nodes = nil)
     nodes =
       if nodes != nil
-        nodes.to_a
+        nodes.to_a.select { |node| node[:nodeType] == NODE_TYPE_NODE }
       else
         JS.global[:document].querySelectorAll("[#{component.data_r_id}]").to_a
       end

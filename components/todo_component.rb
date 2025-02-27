@@ -17,10 +17,14 @@ class TodoComponent < Component
     self.todos += [Todo.new(SecureRandom.uuid, new_todo, false)]
   end
 
-  def done(uuid)
+  def toggle_completed(uuid)
     todo = todos.detect { |t| t.uuid == uuid }
-    todo.completed = true
+    todo.completed = !todo.completed
     self.todos = todos
+  end
+  
+  def remove_todo(uuid)
+    self.todos = todos.reject { |todo| todo.uuid == uuid }
   end
 
   def template
@@ -29,17 +33,17 @@ class TodoComponent < Component
       <input type="text" r-model="new_todo">
       <button r-on:click="add_todo">Add Todo</button>
       <% todos.reverse.each do |todo| %>
-        <% if todo.completed %>
-          <div>
-            <button disabled>Done</button>
-            <s><%= todo.title %></s>
-          </div>
-        <% else %>
-          <div>
-            <button r-on:click="done('<%= todo.uuid %>')">Done</button>
+        <div data-key="<%= todo.uuid %>">
+          <input 
+            type="checkbox" 
+            r-on:change="toggle_completed('<%= todo.uuid %>')" 
+            <%= todo.completed ? "checked" : "" %>
+          >
+          <span <%= todo.completed ? "style='text-decoration: line-through'" : "" %>>
             <%= todo.title %>
-          </div>
-        <% end %>
+          </span>
+          <button r-on:click="remove_todo('<%= todo.uuid %>')" style="margin-left: 8px;">Delete</button>
+        </div>
       <% end %>
     ERB
   end
