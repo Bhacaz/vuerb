@@ -1,40 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Ruby Web Framework WASM</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <link rel="stylesheet" href="https://matcha.mizu.sh/matcha.css">
-    <script type="module" src="main.js"></script>
-    <script type="text/ruby" data-eval="async">
-        # Patch require_relative to load from remote
-        require 'js/require_remote'
-
-        module Kernel
-          alias original_require_relative require_relative
-
-          # The require_relative may be used in the embedded Gem.
-          # First try to load from the built-in filesystem, and if that fails,
-          # load from the URL.
-          def require_relative(path)
-            caller_path = caller_locations(1, 1).first.absolute_path || ''
-            dir = File.dirname(caller_path)
-            file = File.absolute_path(path, dir)
-
-            original_require_relative(file)
-          rescue LoadError
-            JS::RequireRemote.instance.load(path)
-          end
-        end
-
-        # Load the main script
-        require_relative 'lib/vuerb'
-    </script>
-</head>
-<body>
-    <h1>vuerb</h1>
-    <h2>Loading...</h2>
-
-    <div id="app"></div>
-</body>
+    <head>
+        <title>VueRB</title>
+        <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+        <link rel="stylesheet" href="https://matcha.mizu.sh/matcha.css">
+        <script src="https://cdn.jsdelivr.net/npm/@ruby/3.4-wasm-wasi@2.7.1/dist/browser.script.iife.js"></script>
+        <script type="text/ruby" data-eval="async" src="https://raw.githubusercontent.com/Bhacaz/vuerb/refs/tags/v0.1.0/dist/vuerb.rb"></script>
+    </head>
+    <body>
+        <div style="padding-top: 5rem; text-align: center" id="app">Loading...</div>
+    </body>
 </html>
