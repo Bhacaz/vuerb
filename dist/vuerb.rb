@@ -1,3 +1,28 @@
+class Bus
+  @subscriptions = {}
+
+  def self.subscribe(channel, &block)
+    @subscriptions[channel] ||= []
+    @subscriptions[channel] << block
+  end
+
+  def self.publish(channel, payload)
+   puts "Channel: #{channel}, payload: #{payload}"
+
+   @subscriptions.each do |pattern, handlers|
+      if channel.match?(pattern)
+        handlers.each do |handler|
+          handler.call(payload)
+        end
+      end
+   end
+  end
+
+  def self.clear
+   @subscriptions = {}
+  end
+end
+
 class Morph
   class << self
     def call(old, new, component)
@@ -264,3 +289,218 @@ class Morph
     end
   end
 end
+
+class Component
+  attr_accessor :parent_node, :current_nodes
+
+  def initialize
+    @current_nodes = []
+  end
+
+  def component_id
+    "#{self.class}##{object_id}"
+  end
+
+  def self.attr_reactive(attr)
+    define_method("#{attr}=") do |value|
+      instance_variable_set("@#{attr}", value)
+      ::Bus.publish("Reactive/#{component_id}", { component: self, attribute: attr, value: value })
+      # self.class.rerender(self)
+    end
+
+    define_method(attr) do
+      instance_variable_get("@#{attr}")
+    end
+  end
+
+  def render_as_string
+    ERB.new(template).result(binding)
+  end
+
+  # @return Array[JS::Object]
+  def render
+    body = JS.global[:DOMParser].new
+             .parseFromString(render_as_string, 'text/html')[:body]
+
+    # childNodes return string node and cannot attribute
+    body[:children].to_a.each do |node|
+      add_data_r_id_attribute(node)
+    end
+
+    body[:childNodes].to_a
+  end
+
+  def add_data_r_id_attribute(element)
+    element.setAttribute(data_r_id, '')
+    element[:children].to_a.each do |child|
+      add_data_r_id_attribute(child)
+    end
+  end
+
+  def data_r_id
+    "data-r-#{object_id}"
+  end
+
+  def self.bind_events(component, nodes = nil)
+    %w[click change].each do |event|
+      bind_events_for(component, event, nodes)
+    end
+  end
+
+  def self.bind_events_for(component, event_name, nodes = nil)
+    nodes =
+      if nodes != nil
+        nodes = nodes.to_a.select { |node| node[:nodeType] == NODE_TYPE_NODE }
+        children_nodes = nodes.flat_map { |node| node.querySelectorAll("[r-on\\:#{event_name}]").to_a }
+        nodes.each do |node|
+          children_nodes << node if node.hasAttribute("r-on:#{event_name}") == JS::True
+        end
+        children_nodes
+      else
+        # JS.global[:document][:body].querySelectorAll("[#{component.data_r_id}][r-on\\:#{event_name}]").to_a
+      end
+  
+    nodes.each do |element|
+      element.addEventListener(event_name) do |event|
+        args = event[:target].getAttribute("r-on:#{event_name}").to_s
+        component.instance_eval(args)
+        # Need to return an object that respond to to_js.
+        nil
+      end
+    end
+  end
+
+  def self.bind_models(component, nodes = nil)
+    nodes =
+      if nodes != nil
+        nodes.to_a.select { |node| node[:nodeType] == NODE_TYPE_NODE }
+      else
+        JS.global[:document].querySelectorAll("[#{component.data_r_id}]").to_a
+      end
+
+    nodes.each do |element|
+      descendants = element.querySelectorAll('[r-model]').to_a
+      descendants << element if element.getAttribute('r-model') != nil
+      descendants.each do |node|
+        node.addEventListener('input') do |event|
+          binding_name = event[:currentTarget].call(:getAttribute, 'r-model')
+          component.public_send("#{binding_name}=", event[:target][:value].to_s)
+        end
+      end
+    end
+  end
+
+  def self.r_show(component)
+    JS.global[:document].getElementById(component.component_id).querySelectorAll('[r-show]').to_a.each do |element|
+      to_eval = element.getAttribute('r-show').to_s
+      to_show = component.instance_eval(to_eval)
+      element[:style].removeProperty('display') if to_show
+      element[:style].setProperty('display', 'none') unless to_show
+    end
+  end
+
+  def self.rerender(component)
+    # JS.global[:document].getElementById(component.component_id)[:innerHTML] = component.render
+    # bind_events(component)
+   # bind_models(component)
+  end
+end
+
+# frozen_string_literal: true
+
+require 'js'
+require 'json'
+require 'erb'
+require 'securerandom'
+
+# Patch require_relative to load from remote
+require 'js/require_remote'
+
+module Kernel
+  alias original_require_relative require_relative
+
+  # The require_relative may be used in the embedded Gem.
+  # First try to load from the built-in filesystem, and if that fails,
+  # load from the URL.
+  def require_relative(path)
+    caller_path = caller_locations(1, 1).first.absolute_path || ''
+    dir = File.dirname(caller_path)
+    file = File.absolute_path(path, dir)
+
+    original_require_relative(file)
+  rescue LoadError
+    JS::RequireRemote.instance.load(path)
+  end
+end
+
+require_relative 'app'
+
+puts RUBY_VERSION
+# # puts Http.get('https://catfact.ninja/facts?limit=2')['data']
+
+NODE_TYPE_NODE = 1
+NODE_TYPE_TEXT = 3
+
+def mount(element, target)
+  target.replaceChildren(*element)
+end
+
+def app_dom(id = 'app')
+  JS.global[:document].getElementById(id)
+end
+
+def nodes_for_data_r_id(data_r_id)
+  JS.global[:document].querySelectorAll("[#{data_r_id}]")
+end
+
+observer = JS.global[:MutationObserver].new do |mutations|
+  mutations.to_a.each do |mutation|
+    mutation[:addedNodes].to_a.each do |node|
+      next unless node[:nodeType] == NODE_TYPE_NODE
+
+      if node.getAttribute('r-source') != nil
+        component_name = node.getAttribute('r-source').to_s
+        component_class = Object.const_get("#{component_name}Component")
+        component =
+          if node.getAttribute('r-data') != nil
+            data = eval(node.getAttribute('r-data').to_s)
+            component_class.new(**data)
+          else
+            component_class.new
+          end
+        component.parent_node = node[:parentNode]
+        component_render = component.render
+        node.replaceWith(*component_render)
+        component.current_nodes = component_render
+        ::Bus.publish("AddedNodes/#{component.component_id}",
+                      { component: component, nodes: component_render.to_a })
+      end
+    end
+  end
+end
+
+observer.observe(app_dom, { childList: true, subtree: true })
+
+v_app = App.new
+mount(
+  v_app.render,
+  app_dom
+)
+
+::Bus.subscribe(%r{AddedNodes/.*}) do |payload|
+  component = payload[:component]
+  nodes = payload[:nodes]
+
+  Component.bind_events(component, nodes)
+  Component.bind_models(component, nodes)
+end
+
+::Bus.subscribe(%r{Reactive/.*}) do |payload|
+  component = payload[:component]
+
+  current_node_list = component.current_nodes
+  new_rerender = component.render
+
+  component.current_nodes = Morph.call(current_node_list, new_rerender, component)
+end
+

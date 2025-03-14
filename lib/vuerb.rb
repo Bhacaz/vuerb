@@ -5,16 +5,29 @@ require 'json'
 require 'erb'
 require 'securerandom'
 
-require_relative 'bus'
-require_relative 'morph'
-require_relative '../components/component'
-require_relative '../app'
-require_relative '../components/form_component'
-require_relative '../components/increment_component'
-require_relative '../components/random_list_component'
+# Patch require_relative to load from remote
+require 'js/require_remote'
+
+module Kernel
+  alias original_require_relative require_relative
+
+  # The require_relative may be used in the embedded Gem.
+  # First try to load from the built-in filesystem, and if that fails,
+  # load from the URL.
+  def require_relative(path)
+    caller_path = caller_locations(1, 1).first.absolute_path || ''
+    dir = File.dirname(caller_path)
+    file = File.absolute_path(path, dir)
+
+    original_require_relative(file)
+  rescue LoadError
+    JS::RequireRemote.instance.load(path)
+  end
+end
+
+require_relative 'app'
 
 puts RUBY_VERSION
-JS.global[:document].querySelector('h2').remove()
 # # puts Http.get('https://catfact.ninja/facts?limit=2')['data']
 
 NODE_TYPE_NODE = 1
