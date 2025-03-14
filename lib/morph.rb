@@ -11,7 +11,7 @@ class Morph
 
       if new.size > old.size
         new[old.size..].each do |node|
-          new_current_node_list[-1].after(node) 
+          new_current_node_list[-1].after(node)
           Component.bind_events(component, [node])
           new_current_node_list << node
         end
@@ -27,7 +27,7 @@ class Morph
       end
 
       # Text node handling - update content instead of replacing
-      if old_dom[:nodeType] == NODE_TYPE_TEXT && new_dom[:nodeType] == NODE_TYPE_TEXT
+      if old_dom[:nodeType] == NODE_TEXT_NODE && new_dom[:nodeType] == NODE_TEXT_NODE
         if old_dom[:textContent] != new_dom[:textContent]
           return ->(node) do
             node[:textContent] = new_dom[:textContent]
@@ -64,7 +64,7 @@ class Morph
       new_attrs.to_a.each do |attr|
         name = attr[:name]
         value = attr[:value]
-        
+
         if boolean_attrs.include?(name)
           # For boolean attributes, set both property and attribute
           patches << ->(node) { 
@@ -104,8 +104,7 @@ class Morph
       if has_keyed_elements?(old_children) && has_keyed_elements?(new_children)
         return keyed_diff_children(old_children, new_children, component)
       end
-      
-      # Original position-based diffing logic...
+
       child_patches = []
       old_children.each_with_index do |old_child, i|
         if i < new_children.length
@@ -143,13 +142,12 @@ class Morph
         node
       end
     end
-    
-    # New keyed diffing implementation
+
     def keyed_diff_children(old_children, new_children, component)
       # Create key -> node maps
       old_keys = {}
       old_children.each do |child|
-        if child[:nodeType] == NODE_TYPE_NODE
+        if child[:nodeType] == NODE_ELEMENT_NODE
           key = child[:dataset][:key]
           old_keys[key] = child if key != nil
         end
@@ -157,7 +155,7 @@ class Morph
       
       new_keys = {}
       new_children.each do |child|
-        if child[:nodeType] == NODE_TYPE_NODE
+        if child[:nodeType] == NODE_ELEMENT_NODE
           key = child[:dataset][:key]
           new_keys[key] = child if key != nil
         end
@@ -170,7 +168,7 @@ class Morph
       
       # Process new nodes in their order
       new_children.each_with_index do |new_child, new_index|
-        next if new_child[:nodeType] != NODE_TYPE_NODE
+        next if new_child[:nodeType] != NODE_ELEMENT_NODE
         
         key = new_child.getAttribute('data-key')
         if key && old_keys[key]
@@ -206,7 +204,7 @@ class Morph
       # Handle removals - nodes in old but not in new
       removals = []
       old_children.each do |old_child|
-        next if old_child[:nodeType] != NODE_TYPE_NODE
+        next if old_child[:nodeType] != NODE_ELEMENT_NODE
         
         key = old_child.getAttribute('data-key')
         if key && !new_keys[key]
@@ -259,7 +257,7 @@ class Morph
     
     def has_keyed_elements?(children)
       children.any? do |child|
-        child[:nodeType] == NODE_TYPE_NODE && child.getAttribute('data-key')
+        child[:nodeType].to_i == NODE_ELEMENT_NODE && child.getAttribute('data-key') != nil
       end
     end
   end

@@ -22,7 +22,7 @@ class Component
   end
 
   def render_as_string
-    ERB.new(template).result(binding)
+    ERB.new(template).result(binding).strip
   end
 
   # @return Array[JS::Object]
@@ -58,7 +58,7 @@ class Component
   def self.bind_events_for(component, event_name, nodes = nil)
     nodes =
       if nodes != nil
-        nodes = nodes.to_a.select { |node| node[:nodeType] == NODE_TYPE_NODE }
+        nodes = nodes.to_a.select { |node| node[:nodeType] == NODE_ELEMENT_NODE }
         children_nodes = nodes.flat_map { |node| node.querySelectorAll("[r-on\\:#{event_name}]").to_a }
         nodes.each do |node|
           children_nodes << node if node.hasAttribute("r-on:#{event_name}") == JS::True
@@ -81,7 +81,7 @@ class Component
   def self.bind_models(component, nodes = nil)
     nodes =
       if nodes != nil
-        nodes.to_a.select { |node| node[:nodeType] == NODE_TYPE_NODE }
+        nodes.to_a.select { |node| node[:nodeType] == NODE_ELEMENT_NODE }
       else
         JS.global[:document].querySelectorAll("[#{component.data_r_id}]").to_a
       end

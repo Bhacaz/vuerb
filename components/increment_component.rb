@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'component'
-
 class IncrementComponent < Component
   attr_reactive :count
 

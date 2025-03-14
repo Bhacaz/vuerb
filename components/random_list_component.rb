@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'component'
-
 class RandomListComponent < Component
   attr_reactive :items
 

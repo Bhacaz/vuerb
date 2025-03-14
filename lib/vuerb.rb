@@ -25,13 +25,16 @@ module Kernel
   end
 end
 
+require_relative 'lib/bus'
+require_relative 'lib/morph'
+require_relative 'lib/component'
+
 require_relative 'app'
 
-puts RUBY_VERSION
 # # puts Http.get('https://catfact.ninja/facts?limit=2')['data']
 
-NODE_TYPE_NODE = 1
-NODE_TYPE_TEXT = 3
+NODE_ELEMENT_NODE = 1
+NODE_TEXT_NODE = 3
 
 def mount(element, target)
   target.replaceChildren(*element)
@@ -48,7 +51,7 @@ end
 observer = JS.global[:MutationObserver].new do |mutations|
   mutations.to_a.each do |mutation|
     mutation[:addedNodes].to_a.each do |node|
-      next unless node[:nodeType] == NODE_TYPE_NODE
+      next unless node[:nodeType] == NODE_ELEMENT_NODE
 
       if node.getAttribute('r-source') != nil
         component_name = node.getAttribute('r-source').to_s
@@ -73,12 +76,6 @@ end
 
 observer.observe(app_dom, { childList: true, subtree: true })
 
-v_app = App.new
-mount(
-  v_app.render,
-  app_dom
-)
-
 ::Bus.subscribe(%r{AddedNodes/.*}) do |payload|
   component = payload[:component]
   nodes = payload[:nodes]
@@ -95,3 +92,9 @@ end
 
   component.current_nodes = Morph.call(current_node_list, new_rerender, component)
 end
+
+v_app = App.new
+mount(
+  v_app.render,
+  app_dom
+)

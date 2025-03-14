@@ -52,7 +52,7 @@ class Morph
       end
 
       # Text node handling - update content instead of replacing
-      if old_dom[:nodeType] == NODE_TYPE_TEXT && new_dom[:nodeType] == NODE_TYPE_TEXT
+      if old_dom[:nodeType] == NODE_TEXT_NODE && new_dom[:nodeType] == NODE_TEXT_NODE
         if old_dom[:textContent] != new_dom[:textContent]
           return ->(node) do
             node[:textContent] = new_dom[:textContent]
@@ -174,7 +174,7 @@ class Morph
       # Create key -> node maps
       old_keys = {}
       old_children.each do |child|
-        if child[:nodeType] == NODE_TYPE_NODE
+        if child[:nodeType] == NODE_ELEMENT_NODE
           key = child[:dataset][:key]
           old_keys[key] = child if key != nil
         end
@@ -182,7 +182,7 @@ class Morph
       
       new_keys = {}
       new_children.each do |child|
-        if child[:nodeType] == NODE_TYPE_NODE
+        if child[:nodeType] == NODE_ELEMENT_NODE
           key = child[:dataset][:key]
           new_keys[key] = child if key != nil
         end
@@ -195,7 +195,7 @@ class Morph
       
       # Process new nodes in their order
       new_children.each_with_index do |new_child, new_index|
-        next if new_child[:nodeType] != NODE_TYPE_NODE
+        next if new_child[:nodeType] != NODE_ELEMENT_NODE
         
         key = new_child.getAttribute('data-key')
         if key && old_keys[key]
@@ -231,7 +231,7 @@ class Morph
       # Handle removals - nodes in old but not in new
       removals = []
       old_children.each do |old_child|
-        next if old_child[:nodeType] != NODE_TYPE_NODE
+        next if old_child[:nodeType] != NODE_ELEMENT_NODE
         
         key = old_child.getAttribute('data-key')
         if key && !new_keys[key]
@@ -284,7 +284,7 @@ class Morph
     
     def has_keyed_elements?(children)
       children.any? do |child|
-        child[:nodeType] == NODE_TYPE_NODE && child.getAttribute('data-key')
+        child[:nodeType] == NODE_ELEMENT_NODE && child.getAttribute('data-key')
       end
     end
   end
@@ -350,7 +350,7 @@ class Component
   def self.bind_events_for(component, event_name, nodes = nil)
     nodes =
       if nodes != nil
-        nodes = nodes.to_a.select { |node| node[:nodeType] == NODE_TYPE_NODE }
+        nodes = nodes.to_a.select { |node| node[:nodeType] == NODE_ELEMENT_NODE }
         children_nodes = nodes.flat_map { |node| node.querySelectorAll("[r-on\\:#{event_name}]").to_a }
         nodes.each do |node|
           children_nodes << node if node.hasAttribute("r-on:#{event_name}") == JS::True
@@ -373,7 +373,7 @@ class Component
   def self.bind_models(component, nodes = nil)
     nodes =
       if nodes != nil
-        nodes.to_a.select { |node| node[:nodeType] == NODE_TYPE_NODE }
+        nodes.to_a.select { |node| node[:nodeType] == NODE_ELEMENT_NODE }
       else
         JS.global[:document].querySelectorAll("[#{component.data_r_id}]").to_a
       end
@@ -438,8 +438,8 @@ require_relative 'app'
 puts RUBY_VERSION
 # # puts Http.get('https://catfact.ninja/facts?limit=2')['data']
 
-NODE_TYPE_NODE = 1
-NODE_TYPE_TEXT = 3
+NODE_ELEMENT_NODE = 1
+NODE_TEXT_NODE = 3
 
 def mount(element, target)
   target.replaceChildren(*element)
@@ -456,7 +456,7 @@ end
 observer = JS.global[:MutationObserver].new do |mutations|
   mutations.to_a.each do |mutation|
     mutation[:addedNodes].to_a.each do |node|
-      next unless node[:nodeType] == NODE_TYPE_NODE
+      next unless node[:nodeType] == NODE_ELEMENT_NODE
 
       if node.getAttribute('r-source') != nil
         component_name = node.getAttribute('r-source').to_s
