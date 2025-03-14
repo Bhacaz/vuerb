@@ -9,11 +9,11 @@ The render is then morphed to the actual DOM.
 
 It need less directive like `v-if` or `v-for` because it can be done using Ruby and `ERB`.
 
-Some directive is still needed to register to listener.
+Some directive is still needed to register listener.
 
-## Usage
+## Preview
 
-The classic simple counter looks like this.
+The classic simple counter example looks like this.
 
 ```ruby
 class CounterComponent < Component
@@ -34,7 +34,115 @@ end
 
 See it live https://bhacaz.github.io/vuerb/counter
 
-More [example](https://github.com/Bhacaz/vuerb/blob/gh-pages/README.md).
+More [examples](https://github.com/Bhacaz/vuerb/blob/gh-pages/README.md).
+
+## Usage
+
+### Create an application
+
+You need 2 files to get started:
+
+* `./index.html`
+* `./app.rb`
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <title>VueRB</title>
+      <script src="https://cdn.jsdelivr.net/npm/@ruby/3.4-wasm-wasi@2.7.1/dist/browser.script.iife.js"></script>
+      <script type="text/ruby" data-eval="async" src="https://raw.githubusercontent.com/Bhacaz/vuerb/refs/tags/v0.1.0/dist/vuerb.rb"></script>
+  </head>
+  <body>
+      <div id="app">Loading...</div>
+  </body>
+</html>
+```
+
+The `App` class is the main component of the application.
+
+```ruby
+class App < Component
+  def template
+    <<-ERB
+      <h1>Hello VueRB</h1>
+    ERB
+  end
+end
+```
+
+### Running the application
+
+Simply launch a web server in the root of the project like [http-server](https://www.npmjs.com/package/http-server) or
+with Ruby:
+
+```shell
+ruby -run -e httpd . -p 8000
+```
+
+Then open the browser at http://localhost:8000.
+
+## Component
+
+A component is a class that inherit from `Component`. They must be located in the `./components` folder and the class
+name must end with `Component`.
+
+```ruby
+# ./components/MyComponent.rb
+
+class MyComponent < Component
+  def template
+    <<-ERB
+      <h1>My new component</h1>
+    ERB
+  end
+end
+```
+
+### Require and mount a component
+
+To use a component in another component, you need to:
+
+1. Import the component at the top of the file.
+2. Use the `r-source` directive to render the component, without the `Component` suffix.
+
+```ruby
+require_relative 'components/my_component'
+
+class App < Component
+  def template
+    <<-ERB
+      <div r-source="My"></div>
+    ERB
+  end
+end
+```
+
+### Reactive attributes
+
+To make an attribute reactive, use the `attr_reactive` method. When the 
+value of the attribute is reassigned using the **setter**, the component will be re-rendered.
+
+```ruby
+class CounterComponent < Component
+  attr_reactive :count
+
+  def initialize(count: 0)
+    @count = count
+  end
+
+  def template
+    <<~ERB
+      <%= count %>
+      <button r-on:click="self.count += 1">Count</button>
+    ERB
+  end
+end
+```
+
+> [!IMPORTANT]
+> Using `Array#concat` or `Array#push` will not trigger a re-render.
+> It must be reassigned `self.array += ['new_item']`.
 
 ## Directives
 
@@ -61,12 +169,12 @@ class MyComponent < Component
 
   def template
     <<-ERB
-     <input r-model="message">
+      <input r-model="message" value="<%= message %>">
+      <p>The message is: <%= message %></p>
     ERB
   end
 end
 ```
-
 
 ### r-source
 
