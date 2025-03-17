@@ -1,14 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>VueRB</title>
-        <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-        <link rel="stylesheet" href="https://matcha.mizu.sh/matcha.css">
-        <script src="https://cdn.jsdelivr.net/npm/@ruby/3.4-wasm-wasi@2.7.1/dist/browser.script.iife.js"></script>
-        <script type="text/ruby" data-eval="async" src="https://raw.githubusercontent.com/Bhacaz/vuerb/refs/tags/v0.1.0/dist/vuerb.rb"></script>
-    </head>
-    <body>
-        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-        <div id="app">Loading...</div>
-    </body>
+<head>
+    <meta charset="UTF-8">
+    <title>Ruby Web Framework WASM</title>
+    <link rel="stylesheet" href="https://matcha.mizu.sh/matcha.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/@ruby/3.4-wasm-wasi@2.7.1/dist/browser.script.iife.js"></script>
+    <script type="text/ruby" data-eval="async" src="https://raw.githubusercontent.com/Bhacaz/vuerb/refs/tags/v0.1.1/dist/vuerb.rb"></script>
+</head>
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked-highlight/lib/index.umd.js"></script>
+
+<script>
+  const { Marked } = globalThis.marked;
+  const { markedHighlight } = globalThis.markedHighlight;
+  window.markedWithHighlight = new Marked(
+    markedHighlight({
+      emptyLangClass: 'hljs',
+      langPrefix: 'hljs language-',
+      highlight(code, lang, info) {
+        console.log(code, lang, info);
+        const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+        return hljs.highlight(code, { language }).value;
+      }
+    })
+  );
+</script>
+<div id="app">Loading...</div>
+</body>
 </html>
