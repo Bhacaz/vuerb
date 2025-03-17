@@ -36,7 +36,7 @@ class Morph
 
       if new.size > old.size
         new[old.size..].each do |node|
-          new_current_node_list[-1].after(node) 
+          new_current_node_list[-1].after(node)
           Component.bind_events(component, [node])
           new_current_node_list << node
         end
@@ -89,7 +89,7 @@ class Morph
       new_attrs.to_a.each do |attr|
         name = attr[:name]
         value = attr[:value]
-        
+
         if boolean_attrs.include?(name)
           # For boolean attributes, set both property and attribute
           patches << ->(node) { 
@@ -129,8 +129,7 @@ class Morph
       if has_keyed_elements?(old_children) && has_keyed_elements?(new_children)
         return keyed_diff_children(old_children, new_children, component)
       end
-      
-      # Original position-based diffing logic...
+
       child_patches = []
       old_children.each_with_index do |old_child, i|
         if i < new_children.length
@@ -168,8 +167,7 @@ class Morph
         node
       end
     end
-    
-    # New keyed diffing implementation
+
     def keyed_diff_children(old_children, new_children, component)
       # Create key -> node maps
       old_keys = {}
@@ -284,7 +282,7 @@ class Morph
     
     def has_keyed_elements?(children)
       children.any? do |child|
-        child[:nodeType] == NODE_ELEMENT_NODE && child.getAttribute('data-key')
+        child[:nodeType].to_i == NODE_ELEMENT_NODE && child.getAttribute('data-key') != nil
       end
     end
   end
@@ -314,7 +312,7 @@ class Component
   end
 
   def render_as_string
-    ERB.new(template).result(binding)
+    ERB.new(template).result(binding).strip
   end
 
   # @return Array[JS::Object]
@@ -433,9 +431,9 @@ module Kernel
   end
 end
 
+
 require_relative 'app'
 
-puts RUBY_VERSION
 # # puts Http.get('https://catfact.ninja/facts?limit=2')['data']
 
 NODE_ELEMENT_NODE = 1
@@ -481,12 +479,6 @@ end
 
 observer.observe(app_dom, { childList: true, subtree: true })
 
-v_app = App.new
-mount(
-  v_app.render,
-  app_dom
-)
-
 ::Bus.subscribe(%r{AddedNodes/.*}) do |payload|
   component = payload[:component]
   nodes = payload[:nodes]
@@ -503,4 +495,10 @@ end
 
   component.current_nodes = Morph.call(current_node_list, new_rerender, component)
 end
+
+v_app = App.new
+mount(
+  v_app.render,
+  app_dom
+)
 

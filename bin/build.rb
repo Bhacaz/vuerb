@@ -7,5 +7,8 @@ vuerb = <<~RB
   #{File.read('lib/vuerb.rb')}
 RB
 
+# require_relative only useful for development
+vuerb.gsub!(/require_relative 'lib\/.+\n/, '')
+
 Dir.mkdir('dist') unless Dir.exist?('dist')
 File.write('dist/vuerb.rb', vuerb)
