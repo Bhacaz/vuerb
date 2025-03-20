@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'securerandom'
+require_relative 'item_component'
 
 class TodoComponent < Component
   Todo = Struct.new(:uuid, :title, :completed)
@@ -61,6 +62,7 @@ class TodoComponent < Component
       </menu>
       
       <% todos.reverse.each do |todo| %>
+        <div r-source="Item" r-data="<%= todo.to_h %>"></div>
         <div data-key="<%= todo.uuid %>">
           <input 
             type="checkbox" 
