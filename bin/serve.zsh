@@ -1,3 +1,3 @@
 #!/usr/bin/env zsh
 
-ruby -run -e httpd . -p 8000
+rerun -- ruby -run -e httpd . -p 8000
