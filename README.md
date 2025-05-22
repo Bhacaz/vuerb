@@ -41,12 +41,13 @@ More [examples](https://github.com/Bhacaz/vuerb/blob/gh-pages/README.md).
 ### Create an application
 
 ```shell
-curl -s https://raw.githubusercontent.com/Bhacaz/vuerb/refs/heads/main/dist/init.rb | ruby - my_new_app_name
+curl -s https://raw.githubusercontent.com/Bhacaz/vuerb/refs/heads/main/dist/init.rb | ruby - my_new_app
 ```
 
 The structure of the project should look like this:
 
 ```
+my_new_app/
 ├── index.html
 ├── app.rb
 ├──components
