@@ -40,6 +40,10 @@ More [examples](https://github.com/Bhacaz/vuerb/blob/gh-pages/README.md).
 
 ### Create an application
 
+```shell
+curl -s https://raw.githubusercontent.com/Bhacaz/vuerb/refs/heads/main/dist/init.rb | ruby - my_new_app_name
+```
+
 The structure of the project should look like this:
 
 ```
@@ -47,32 +51,6 @@ The structure of the project should look like this:
 ├── app.rb
 ├──components
    └── my_component.rb
-```
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-      <title>VueRB</title>
-      <script src="https://cdn.jsdelivr.net/npm/@ruby/3.4-wasm-wasi@2.7.1/dist/browser.script.iife.js"></script>
-      <script type="text/ruby" data-eval="async" src="https://raw.githubusercontent.com/Bhacaz/vuerb/refs/tags/v0.1.0/dist/vuerb.rb"></script>
-  </head>
-  <body>
-      <div id="app">Loading...</div>
-  </body>
-</html>
-```
-
-The `App` class is the main component of the application.
-
-```ruby
-class App < Component
-  def template
-    <<-ERB
-      <h1>Hello VueRB</h1>
-    ERB
-  end
-end
 ```
 
 ### Running the application
