@@ -40,10 +40,14 @@ More [examples](https://github.com/Bhacaz/vuerb/blob/gh-pages/README.md).
 
 ### Create an application
 
-You need 2 files to get started:
+The structure of the project should look like this:
 
-* `./index.html`
-* `./app.rb`
+```
+├── index.html
+├── app.rb
+├──components
+   └── my_component.rb
+```
 
 ```html
 <!DOCTYPE html>
