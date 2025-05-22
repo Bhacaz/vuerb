@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 require_relative './lib/component'
+require_relative './components/todos/todo_component'
 require_relative './components/editor_component'
 require_relative './components/form_component'
 
 class App < Component
   def template
     <<-ERB
-      <div r-source="Editor"></div>
+     <div r-source="Todo"></div>
     ERB
   end
 end

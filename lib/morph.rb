@@ -148,16 +148,16 @@ class Morph
       old_keys = {}
       old_children.each do |child|
         if child[:nodeType] == NODE_ELEMENT_NODE
-          key = child[:dataset][:key]
-          old_keys[key] = child if key != nil
+          key = parse_key(child[:dataset][:key])
+          old_keys[key] = child if key
         end
       end
-      
+
       new_keys = {}
       new_children.each do |child|
         if child[:nodeType] == NODE_ELEMENT_NODE
-          key = child[:dataset][:key]
-          new_keys[key] = child if key != nil
+          key = parse_key(child[:dataset][:key])
+          new_keys[key] = child if key
         end
       end
       
@@ -165,13 +165,13 @@ class Morph
       patches = []
       moves = []
       additions = []
-      
+
       # Process new nodes in their order
       new_children.each_with_index do |new_child, new_index|
         next if new_child[:nodeType] != NODE_ELEMENT_NODE
         
-        key = new_child.getAttribute('data-key')
-        if key && old_keys[key]
+        key = parse_key(new_child.getAttribute('data-key'))
+        if key && old_keys.key?(key)
           # Node exists in both old and new - create patch and mark for move
           old_child = old_keys[key]
           patch = diff(old_child, new_child, component)
@@ -206,7 +206,7 @@ class Morph
       old_children.each do |old_child|
         next if old_child[:nodeType] != NODE_ELEMENT_NODE
         
-        key = old_child.getAttribute('data-key')
+        key = parse_key(old_child.getAttribute('data-key'))
         if key && !new_keys[key]
           removals << old_child
         end
@@ -257,8 +257,15 @@ class Morph
     
     def has_keyed_elements?(children)
       children.any? do |child|
-        child[:nodeType].to_i == NODE_ELEMENT_NODE && child.getAttribute('data-key') != nil
+        child[:nodeType].to_i == NODE_ELEMENT_NODE && parse_key(child.getAttribute('data-key'))
       end
+    end
+
+    def parse_key(key)
+      key = key.to_s
+      return if key.empty?
+
+      key
     end
   end
 end

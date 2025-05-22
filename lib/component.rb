@@ -31,9 +31,11 @@ class Component
              .parseFromString(render_as_string, 'text/html')[:body]
 
     # childNodes return string node and cannot attribute
-    body[:children].to_a.each do |node|
-      add_data_r_id_attribute(node)
-    end
+    # FIX: Nested component will have the data-r the parent id
+    # because it is set after the render_as_string.
+    # body[:children].to_a.each do |node|
+    #   add_data_r_id_attribute(node)
+    # end
 
     body[:childNodes].to_a
   end
@@ -46,7 +48,7 @@ class Component
   end
 
   def data_r_id
-    "data-r-#{object_id}"
+    "data-r-#{self.class.name}"
   end
 
   def self.bind_events(component, nodes = nil)

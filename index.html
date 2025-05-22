@@ -4,42 +4,33 @@
     <meta charset="UTF-8">
     <title>Ruby Web Framework WASM</title>
     <link rel="stylesheet" href="https://matcha.mizu.sh/matcha.css">
-    <script type="module" src="main.js"></script>
-    <script type="text/ruby" data-eval="async">
-        # Patch require_relative to load from remote
-        require 'js/require_remote'
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" rel="stylesheet">
 
-        module Kernel
-          alias original_require_relative require_relative
-
-          # The require_relative may be used in the embedded Gem.
-          # First try to load from the built-in filesystem, and if that fails,
-          # load from the URL.
-          def require_relative(path)
-            caller_path = caller_locations(1, 1).first.absolute_path || ''
-            dir = File.dirname(caller_path)
-            file = File.absolute_path(path, dir)
-
-            original_require_relative(file)
-          rescue LoadError
-            JS::RequireRemote.instance.load(path)
-          end
-        end
-
-        # Load the main script
-        require_relative 'lib/vuerb'
-    </script>
-
-    <style>
-        .blue {
-            background-color: blue;
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@ruby/3.4-wasm-wasi@2.7.1/dist/browser.script.iife.js"></script>
+    <script type="text/ruby" data-eval="async" src="lib/vuerb.rb" ></script>
 </head>
 <body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked-highlight/lib/index.umd.js"></script>
+
+<script>
+  const { Marked } = globalThis.marked;
+  const { markedHighlight } = globalThis.markedHighlight;
+  window.markedWithHighlight = new Marked(
+    markedHighlight({
+      emptyLangClass: 'hljs',
+      langPrefix: 'hljs language-',
+      highlight(code, lang, info) {
+        console.log(code, lang, info);
+        const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+        return hljs.highlight(code, { language }).value;
+      }
+    })
+  );
+</script>
     <div id="app">Loading...</div>
-<!--    <div r-source="Increment" r-data="{ count: 0 }"></div>-->
-<!--    <div r-source="RandomList"></div>-->
-<!--    <div r-source="Form"></div>-->
 </body>
 </html>

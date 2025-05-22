@@ -53,8 +53,10 @@ observer = JS.global[:MutationObserver].new do |mutations|
     mutation[:addedNodes].to_a.each do |node|
       next unless node[:nodeType] == NODE_ELEMENT_NODE
 
+      p node[:attributes].to_a.map { |a| a[:name] }
       if node.getAttribute('r-source') != nil
         component_name = node.getAttribute('r-source').to_s
+        p component_name
         component_class = Object.const_get("#{component_name}Component")
         component =
           if node.getAttribute('r-data') != nil

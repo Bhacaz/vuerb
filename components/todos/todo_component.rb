@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'securerandom'
+require_relative 'item_component'
 
 class TodoComponent < Component
   Todo = Struct.new(:uuid, :title, :completed)
@@ -60,19 +61,11 @@ class TodoComponent < Component
         <li class="<%= selected(:completed) %>" r-on:click="apply_filter(:completed)">Completed</li>
       </menu>
       
-      <% todos.reverse.each do |todo| %>
-        <div data-key="<%= todo.uuid %>">
-          <input 
-            type="checkbox" 
-            r-on:change="toggle_completed('<%= todo.uuid %>')" 
-            <%= todo.completed ? "checked" : "" %>
-          >
-          <span <%= todo.completed ? "style='text-decoration: line-through'" : "" %>>
-            <%= todo.title %>
-          </span>
-          <button r-on:click="remove_todo('<%= todo.uuid %>')" style="margin-left: 8px;">Delete</button>
-        </div>
-      <% end %>
+      <div>
+        <% todos.reverse.each do |todo| %>
+          <%= ItemComponent.new(todo).render_as_string %>
+        <% end %>
+      </div>
     ERB
   end
 end
